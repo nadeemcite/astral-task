@@ -1,0 +1,6 @@
+{
+    "imports": {
+        "langchain/": "npm:/langchain@0.3.2/",
+        "@langchain/community/": "npm:/@langchain/community@0.3.0/"
+    }
+}
