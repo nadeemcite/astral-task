@@ -1,9 +1,19 @@
+import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+
+console.log(`Function "browser-with-cors" up and running!`);
+
 Deno.serve(async (req: Request) => {
+    if (req.method === "OPTIONS") {
+        return new Response("ok", { headers: corsHeaders });
+    }
     if (req.method !== "GET") {
         return new Response(
             JSON.stringify({ error: "Method Not Allowed. Use GET." }),
-            { status: 405, headers: { "Content-Type": "application/json" } },
+            {
+                status: 405,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
         );
     }
 
@@ -16,7 +26,10 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: "'id' query parameter is required." }),
                 {
                     status: 400,
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        ...corsHeaders,
+                        "Content-Type": "application/json",
+                    },
                 },
             );
         }
@@ -39,7 +52,7 @@ Deno.serve(async (req: Request) => {
             url: response?.url,
             pages: "0",
         };
-        const API_KEY =Deno.env.get("PDFCO_API_KEY")
+        const API_KEY = Deno.env.get("PDFCO_API_KEY");
         if (!API_KEY) {
             return new Response(
                 JSON.stringify({
@@ -47,7 +60,10 @@ Deno.serve(async (req: Request) => {
                 }),
                 {
                     status: 500,
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        ...corsHeaders,
+                        "Content-Type": "application/json",
+                    },
                 },
             );
         }
@@ -70,7 +86,10 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: `PDF.co API error: ${errorText}` }),
                 {
                     status: pdfCoResponse.status,
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        ...corsHeaders,
+                        "Content-Type": "application/json",
+                    },
                 },
             );
         }
@@ -79,15 +98,18 @@ Deno.serve(async (req: Request) => {
         const redirectUrl = result.urls[0];
         return new Response(null, {
             status: 302,
-            headers: { "Location": redirectUrl },
+            headers: { ...corsHeaders, "Location": redirectUrl },
         });
-    } catch (error:any) {
+    } catch (error: any) {
         return new Response(
             JSON.stringify({
                 error: "Internal Server Error",
                 details: error.message,
             }),
-            { status: 500, headers: { "Content-Type": "application/json" } },
+            {
+                status: 500,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
         );
     }
 });

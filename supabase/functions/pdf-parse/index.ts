@@ -1,4 +1,4 @@
-// pdf-parse endpoint (e.g., process_pdf.ts)
+import { corsHeaders } from '../_shared/cors.ts'
 import pdfParse from "npm:pdf-parse";
 import fetch from "npm:node-fetch";
 import { PDFPageData, PDFParseOptions, RequestBody } from "./schemas.ts";
@@ -24,6 +24,9 @@ async function getEmbedding(text: string): Promise<number[]> {
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -115,13 +118,13 @@ Deno.serve(async (req: Request) => {
         pages: pagesData,
       }),
       {
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

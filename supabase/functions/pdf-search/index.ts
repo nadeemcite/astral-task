@@ -1,3 +1,4 @@
+import { corsHeaders } from '../_shared/cors.ts'
 import { RequestBody } from "./schemas.ts";
 import { searchApi } from "./search-api.ts";
 import axiod from "https://deno.land/x/axiod/mod.ts";
@@ -25,10 +26,13 @@ async function isEndpointWorking(url: string): Promise<boolean> {
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
   if (req.method !== "POST") {
     return new Response(
       JSON.stringify({ error: "Method Not Allowed. Use POST." }),
-      { status: 405, headers: { "Content-Type": "application/json" } },
+      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
   
@@ -39,7 +43,7 @@ Deno.serve(async (req: Request) => {
   if (pdfResults.length === 0) {
     return new Response(
       JSON.stringify({ error: "No results found, please adjust your query." }),
-      { status: 404, headers: { "Content-Type": "application/json" } },
+      { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 
@@ -53,12 +57,12 @@ Deno.serve(async (req: Request) => {
   if (workingResults.length === 0) {
     return new Response(
       JSON.stringify({ error: "None of the PDF endpoints are working." }),
-      { status: 404, headers: { "Content-Type": "application/json" } },
+      { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 
   return new Response(
     JSON.stringify({ results: workingResults }),
-    { headers: { "Content-Type": "application/json" } },
+    { headers: { ...corsHeaders,"Content-Type": "application/json" } },
   );
 });

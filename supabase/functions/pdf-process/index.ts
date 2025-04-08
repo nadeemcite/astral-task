@@ -1,3 +1,4 @@
+import { corsHeaders } from '../_shared/cors.ts'
 import { RequestBody } from "./schemas.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { OpenAI } from "npm:openai";
@@ -21,6 +22,9 @@ async function getEmbedding(text: string): Promise<number[]> {
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
   try {
     const { pdfSource, query }: RequestBody = await req.json();
 
@@ -31,7 +35,7 @@ Deno.serve(async (req: Request) => {
         }),
         {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -60,13 +64,13 @@ Deno.serve(async (req: Request) => {
         matching_pages: data,
       }),
       {
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

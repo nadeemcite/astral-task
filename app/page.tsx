@@ -5,7 +5,7 @@ import { SearchBar } from '@/components/SearchBar';
 import { useState } from 'react';
 import { SearchResults } from '@/components/SearchResults';
 import { SearchResultType } from '@/types';
-import { parsePdf, searchPDF } from './api/pdf';
+import { parsePdf, searchPDF } from '@/lib/pdf';
 
 
 
