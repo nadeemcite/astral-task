@@ -2,7 +2,7 @@
 
 export const searchPDF = async (query: string) => {
     const response = await fetch(
-        `${process.env.SUPABASE_API_PREFIX}/functions/v1/pdf-search`,
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/pdf-search`,
         {
             method: "POST",
             headers: {
@@ -22,7 +22,7 @@ export const searchPDF = async (query: string) => {
 
 export const parsePdf = async (pdfUrl: string) =>{
     const response = await fetch(
-        `${process.env.SUPABASE_API_PREFIX}/functions/v1/pdf-parse`,
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/pdf-parse`,
         {
             method: "POST",
             headers: {

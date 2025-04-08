@@ -7,7 +7,7 @@ export async function GET(req: Request) {
   if (!id) {
     return NextResponse.json({ error: "Missing id query parameter" }, { status: 400 });
   }
-  const apiUrl = new URL(`${process.env.SUPABASE_API_PREFIX}/functions/v1/pdf-image/`);
+  const apiUrl = new URL(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/pdf-image/`);
   apiUrl.searchParams.append("id", id);
 
   const response = await fetch(apiUrl.toString(), {
