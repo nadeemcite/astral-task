@@ -23,9 +23,8 @@ create table if not exists pdf_page (
 
 -- matching function
 create or replace function match_pdf_pages(query_embedding vector, pdf_source uuid)
-returns table(page_number int, content text, similarity float) as $$
+returns table(page_number int, similarity float) as $$
   select page_number,
-         content,
          1 - (embeddings <=> query_embedding) as similarity
   from pdf_page
   where pdf_source_id = pdf_source

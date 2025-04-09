@@ -6,9 +6,9 @@ import { getEmbeddings } from "../_shared/openaiClient.ts";
 Deno.serve(
   withMethodCheck("POST", async (req: Request) => {
     try {
-      const { pdfSource, query }: RequestBody = await req.json();
+      const { pdfSourceId, query }: RequestBody = await req.json();
 
-      if (!pdfSource || !query) {
+      if (!pdfSourceId || !query) {
         return buildResponse(
           {
             error: "Missing pdfSource or query in request body",
@@ -23,7 +23,7 @@ Deno.serve(
 
       const { data, error } = await supabase.rpc("match_pdf_pages", {
         query_embedding: queryEmbedding,
-        pdf_source: pdfSource,
+        pdf_source: pdfSourceId,
       });
 
       if (error) {
@@ -31,7 +31,7 @@ Deno.serve(
       }
 
       return buildResponse({
-        matching_pages: data,
+        pages: data,
       });
     } catch (err: any) {
       return buildResponse({ error: err.message }, 500);

@@ -9,13 +9,7 @@ const PagesPill = ({ totalPages }: { totalPages: number }) => {
   );
 };
 
-const RelevancyInfo = ({
-  totalPages,
-  relevantPages,
-}: {
-  totalPages: number;
-  relevantPages?: { startPage: number; endPage: number };
-}) => {
+const RelevancyInfo = ({ relevantPages }: { relevantPages?: string }) => {
   if (!relevantPages) {
     return (
       <div className="flex items-center gap-1 text-sm text-gray-500 mt-2">
@@ -25,19 +19,14 @@ const RelevancyInfo = ({
     );
   }
 
-  const range = relevantPages.endPage - relevantPages.startPage + 1;
-  if (range === totalPages) {
-    return (
-      <div className="text-sm text-gray-500 mt-2">All pages are relevant</div>
-    );
-  }
+  // const range = relevantPages.endPage - relevantPages.startPage + 1;
+  // if (range === totalPages) {
+  //   return (
+  //     <div className="text-sm text-gray-500 mt-2">All pages are relevant</div>
+  //   );
+  // }
 
-  return (
-    <div className="text-sm text-gray-500 mt-2">
-      {range} relevant pages from page {relevantPages.startPage} -{" "}
-      {relevantPages.endPage}
-    </div>
-  );
+  return <div className="text-sm text-gray-500 mt-2">{relevantPages}</div>;
 };
 
 const SearchResult = ({
@@ -68,13 +57,9 @@ const SearchResult = ({
       </div>
       <div className="p-4 flex-1">
         <h3 className="font-medium text-base mb-2">{title}</h3>
-        <p className="text-sm text-gray-600">{description.slice(0, 400)}</p>
-        {totalPages && (
-          <RelevancyInfo
-            totalPages={totalPages}
-            relevantPages={relevantPages}
-          />
-        )}
+        <p className="text-sm text-gray-600">{description.slice(0, 500)}</p>
+
+        <RelevancyInfo relevantPages={relevantPages} />
       </div>
     </div>
   );

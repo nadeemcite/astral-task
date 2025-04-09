@@ -10,7 +10,7 @@ const extractFileName = (url: string) => {
     dotIndex !== -1 ? cleanFile.substring(0, dotIndex) : cleanFile;
   const finalName = fileNameWithoutExt.replace(/[^a-zA-Z0-9]/g, " ");
   return finalName;
-}
+};
 
 const tavilySearch = async (query: string) => {
   const client = tavily({ apiKey: Deno.env.get("TAVILY_API_KEY") });

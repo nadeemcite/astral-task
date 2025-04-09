@@ -5,8 +5,5 @@ export type SearchResultType = {
   description: string;
   image?: string;
   totalPages?: number;
-  relevantPages?: {
-    startPage: number;
-    endPage: number;
-  };
+  relevantPages?: string;
 };

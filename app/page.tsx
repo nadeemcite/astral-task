@@ -5,7 +5,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { useState } from "react";
 import { SearchResults } from "@/components/SearchResults";
 import { SearchResultType } from "@/types";
-import { parsePdf, searchPDF } from "@/lib/pdf";
+import { parsePdf, processPdf, searchPDF } from "@/lib/pdf";
 
 export default function Home() {
   const [selectedGrade, setSelectedGrade] = useState<Grade>(Grade.ALL);
@@ -15,15 +15,21 @@ export default function Home() {
 
   const scanPdf = async (pdfUrl: string) => {
     setSearchResults([]);
-    const resp = await parsePdf(pdfUrl);
+    const pdfParseResponse = await parsePdf(pdfUrl);
+    const relavanceResponse = await processPdf(
+      pdfParseResponse.pdf_source_id,
+      searchQuery,
+    );
+
     setSearchResults((prevResults) =>
       prevResults.map((result) =>
         result.url === pdfUrl
           ? {
               ...result,
-              totalPages: resp.pages.length,
-              id: resp.pdf_source_id,
-              image: `/api/pdf/image?id=${resp.pdf_source_id}`,
+              totalPages: pdfParseResponse.pages.length,
+              id: pdfParseResponse.pdf_source_id,
+              image: `/api/pdf/image?id=${pdfParseResponse.pdf_source_id}`,
+              relevantPages: relavanceResponse,
             }
           : result,
       ),
@@ -37,19 +43,22 @@ export default function Home() {
         selectedGrade === "all"
           ? searchQuery
           : `${searchQuery} Grade ${selectedGrade}`;
-          
+
       const resp = await searchPDF(query);
-      
-      const results = resp.results.map((row:any, i:number) => ({
-        id: i,
-        url: row.url,
-        description: row.content,
-        title: row.title,
-        totalPages: null,
-      }));
-      
-      Promise.all(results.map((row:any) => scanPdf(row.url)));
-      
+
+      const results: SearchResultType[] = resp.results.map(
+        (row: any, i: number) => ({
+          id: i,
+          url: row.url,
+          description: row.content,
+          title: row.title,
+          totalPages: null,
+          relavantPages: null,
+        }),
+      );
+
+      Promise.all(results.map((row: any) => scanPdf(row.url)));
+
       setSearchResults(results);
     } catch (error) {
       console.error("Error in searchPdf:", error);

@@ -1,5 +1,5 @@
 interface RequestBody {
-  pdfSource: string;
+  pdfSourceId: string;
   query: string;
 }
 

@@ -76,13 +76,15 @@ const createNewPdfData = async (supabase: any, url: string) => {
       };
     }),
   );
-  const batchSize = 10
-  const batchInsertPages = async (pagesData: {
-    content: string;
-    page_number: number;
-    pdf_source_id: any;
-    embeddings: number[]
-  }[]) => {
+  const batchSize = 10;
+  const batchInsertPages = async (
+    pagesData: {
+      content: string;
+      page_number: number;
+      pdf_source_id: any;
+      embeddings: number[];
+    }[],
+  ) => {
     let insertedPages: any[] = [];
     for (let i = 0; i < pagesData.length; i += batchSize) {
       const batch = pagesData.slice(i, i + batchSize);
