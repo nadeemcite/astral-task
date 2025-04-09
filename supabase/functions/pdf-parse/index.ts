@@ -76,10 +76,27 @@ const createNewPdfData = async (supabase: any, url: string) => {
       };
     }),
   );
-  const { data: insertPagesData, error: insertPagesError } = await supabase
-    .from("pdf_page")
-    .insert(pagesWithEmbeddings)
-    .select("id, content, page_number");
-  if (insertPagesError) throw new Error(insertPagesError.message);
+  const batchSize = 10
+  const batchInsertPages = async (pagesData: {
+    content: string;
+    page_number: number;
+    pdf_source_id: any;
+    embeddings: number[]
+  }[]) => {
+    let insertedPages: any[] = [];
+    for (let i = 0; i < pagesData.length; i += batchSize) {
+      const batch = pagesData.slice(i, i + batchSize);
+      const { data: batchData, error: batchError } = await supabase
+        .from("pdf_page")
+        .insert(batch)
+        .select("id, content, page_number");
+      if (batchError) {
+        throw new Error(batchError.message);
+      }
+      insertedPages = insertedPages.concat(batchData);
+    }
+    return insertedPages;
+  };
+  const insertPagesData = await batchInsertPages(pagesWithEmbeddings);
   return { pdf_source_id, pagesData: insertPagesData };
 };

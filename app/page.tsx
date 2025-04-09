@@ -14,6 +14,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const scanPdf = async (pdfUrl: string) => {
+    setSearchResults([]);
     const resp = await parsePdf(pdfUrl);
     setSearchResults((prevResults) =>
       prevResults.map((result) =>
@@ -33,21 +34,25 @@ export default function Home() {
     setIsLoading(true);
     try {
       const query =
-        selectedGrade == "all"
+        selectedGrade === "all"
           ? searchQuery
           : `${searchQuery} Grade ${selectedGrade}`;
+          
       const resp = await searchPDF(query);
-      const results = resp.results.map((row: any, i: number) => {
-        scanPdf(row.url);
-        return {
-          id: i,
-          url: row.url,
-          description: row.content,
-          title: row.title,
-          totalPages: null,
-        };
-      });
+      
+      const results = resp.results.map((row:any, i:number) => ({
+        id: i,
+        url: row.url,
+        description: row.content,
+        title: row.title,
+        totalPages: null,
+      }));
+      
+      Promise.all(results.map((row:any) => scanPdf(row.url)));
+      
       setSearchResults(results);
+    } catch (error) {
+      console.error("Error in searchPdf:", error);
     } finally {
       setIsLoading(false);
     }
