@@ -11,7 +11,7 @@ export const metadata = {
   title: "AI PDF Challenge",
   description: "AI-powered PDF processing application",
   icons: {
-    icon: '/favicon.ico',
+    icon: "/favicon.ico",
   },
 };
 

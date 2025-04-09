@@ -1,5 +1,5 @@
-import { Search, History } from 'lucide-react';
-import { useState } from 'react';
+import { Search, History } from "lucide-react";
+import { useState } from "react";
 
 interface SearchHistoryProps {
   history: string[];
@@ -19,7 +19,12 @@ function SearchHistory({ history, onSelect }: SearchHistoryProps) {
   }
 
   return (
-    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50" onClick={(e)=>{e.stopPropagation();}}>
+    <div
+      className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
+    >
       {history.map((query, index) => (
         <button
           key={index}
@@ -45,7 +50,14 @@ interface SearchBarProps {
   history?: string[];
 }
 
-export function SearchBar({ value, onChange, onSearch, placeholder = "Search...", history = [], isLoading }: SearchBarProps) {
+export function SearchBar({
+  value,
+  onChange,
+  onSearch,
+  placeholder = "Search...",
+  history = [],
+  isLoading,
+}: SearchBarProps) {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
@@ -62,7 +74,7 @@ export function SearchBar({ value, onChange, onSearch, placeholder = "Search..."
         />
         <button
           type="submit"
-          className={`h-12 w-12 flex items-center justify-center bg-gray-900 text-white hover:bg-gray-800 transition duration-200 ${isLoading?'cursor-not-allowed':'cursor-pointer'}`}
+          className={`h-12 w-12 flex items-center justify-center bg-gray-900 text-white hover:bg-gray-800 transition duration-200 ${isLoading ? "cursor-not-allowed" : "cursor-pointer"}`}
           onClick={onSearch}
           disabled={isLoading}
         >

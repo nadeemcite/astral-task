@@ -5,7 +5,8 @@
     "build": "next build",
     "start": "next start",
     "supabase-start": "supabase start",
-    "supabase-stop": "supabase stop"
+    "supabase-stop": "supabase stop",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

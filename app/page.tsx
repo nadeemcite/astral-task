@@ -1,13 +1,11 @@
-'use client'
+"use client";
 
-import { GradeDropdown, Grade } from '@/components/GradeDropdown';
-import { SearchBar } from '@/components/SearchBar';
-import { useState } from 'react';
-import { SearchResults } from '@/components/SearchResults';
-import { SearchResultType } from '@/types';
-import { parsePdf, searchPDF } from '@/lib/pdf';
-
-
+import { GradeDropdown, Grade } from "@/components/GradeDropdown";
+import { SearchBar } from "@/components/SearchBar";
+import { useState } from "react";
+import { SearchResults } from "@/components/SearchResults";
+import { SearchResultType } from "@/types";
+import { parsePdf, searchPDF } from "@/lib/pdf";
 
 export default function Home() {
   const [selectedGrade, setSelectedGrade] = useState<Grade>(Grade.ALL);
@@ -21,13 +19,13 @@ export default function Home() {
       prevResults.map((result) =>
         result.url === pdfUrl
           ? {
-            ...result,
-            totalPages: resp.pages.length,
-            id: resp.pdf_source_id,
-            image: `/api/pdf/image?id=${resp.pdf_source_id}`
-          }
-          : result
-      )
+              ...result,
+              totalPages: resp.pages.length,
+              id: resp.pdf_source_id,
+              image: `/api/pdf/image?id=${resp.pdf_source_id}`,
+            }
+          : result,
+      ),
     );
   };
 
@@ -77,7 +75,10 @@ export default function Home() {
               />
             </div>
             <div className="ml-4 relative z-10 h-12">
-              <GradeDropdown value={selectedGrade} onChange={setSelectedGrade} />
+              <GradeDropdown
+                value={selectedGrade}
+                onChange={setSelectedGrade}
+              />
             </div>
           </div>
         </div>

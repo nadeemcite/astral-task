@@ -5,29 +5,34 @@ export async function GET(req: Request) {
   const id = searchParams.get("id");
 
   if (!id) {
-    return NextResponse.json({ error: "Missing id query parameter" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing id query parameter" },
+      { status: 400 },
+    );
   }
-  const apiUrl = new URL(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/pdf-image/`);
+  const apiUrl = new URL(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/pdf-image/`,
+  );
   apiUrl.searchParams.append("id", id);
 
   const response = await fetch(apiUrl.toString(), {
     method: "GET",
     headers: {
-      "Authorization": `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+      Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
     },
   });
 
   if (!response.ok) {
     return NextResponse.json(
       { error: `HTTP error! status: ${response.status}` },
-      { status: response.status }
+      { status: response.status },
     );
   }
   const buffer = await response.arrayBuffer();
 
   return new NextResponse(buffer, {
     headers: {
-      'Content-Type': 'image/png',
+      "Content-Type": "image/png",
     },
   });
 }

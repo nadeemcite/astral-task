@@ -1,6 +1,6 @@
 interface RequestBody {
-    pdfSource: string;
-    query: string;
+  pdfSource: string;
+  query: string;
 }
 
-export type {RequestBody}
+export type { RequestBody };

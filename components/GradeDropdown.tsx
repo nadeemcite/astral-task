@@ -1,20 +1,20 @@
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown } from "lucide-react";
 
 export enum Grade {
-  ALL = 'all',
-  KINDERGARTEN = 'K',
-  GRADE_1 = '1',
-  GRADE_2 = '2',
-  GRADE_3 = '3',
-  GRADE_4 = '4',
-  GRADE_5 = '5',
-  GRADE_6 = '6',
-  GRADE_7 = '7',
-  GRADE_8 = '8',
-  GRADE_9 = '9',
-  GRADE_10 = '10',
-  GRADE_11 = '11',
-  GRADE_12 = '12',
+  ALL = "all",
+  KINDERGARTEN = "K",
+  GRADE_1 = "1",
+  GRADE_2 = "2",
+  GRADE_3 = "3",
+  GRADE_4 = "4",
+  GRADE_5 = "5",
+  GRADE_6 = "6",
+  GRADE_7 = "7",
+  GRADE_8 = "8",
+  GRADE_9 = "9",
+  GRADE_10 = "10",
+  GRADE_11 = "11",
+  GRADE_12 = "12",
 }
 
 type GradeOption = {
@@ -48,7 +48,7 @@ interface GradeDropdownProps {
 export function GradeDropdown({ value, onChange }: GradeDropdownProps) {
   return (
     <div className="relative h-full">
-      <select 
+      <select
         value={value}
         onChange={(e) => onChange(e.target.value as Grade)}
         className="appearance-none h-full pl-3 pr-8 bg-gray-100 rounded-md text-sm text-gray-900 border border-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-400"

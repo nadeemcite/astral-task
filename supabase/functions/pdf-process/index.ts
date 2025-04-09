@@ -1,76 +1,40 @@
-import { corsHeaders } from '../_shared/cors.ts'
+import { withMethodCheck, buildResponse } from "../_shared/cors.ts";
+import { getSupabaseClient } from "../_shared/supabaseClient.ts";
 import { RequestBody } from "./schemas.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
-import { OpenAI } from "npm:openai";
+import { getEmbeddings } from "../_shared/openaiClient.ts";
 
-const openai = new OpenAI({
-  apiKey: Deno.env.get("OPENAI_API_KEY") ?? "",
-});
+Deno.serve(
+  withMethodCheck("POST", async (req: Request) => {
+    try {
+      const { pdfSource, query }: RequestBody = await req.json();
 
-function normalize(vector: number[]): number[] {
-  const norm = Math.sqrt(vector.reduce((acc, v) => acc + v * v, 0));
-  return norm ? vector.map((v) => v / norm) : vector;
-}
+      if (!pdfSource || !query) {
+        return buildResponse(
+          {
+            error: "Missing pdfSource or query in request body",
+          },
+          400,
+        );
+      }
 
-async function getEmbedding(text: string): Promise<number[]> {
-  const response = await openai.embeddings.create({
-    input: text,
-    model: "text-embedding-ada-002",
-  });
-  const rawEmbedding = response.data[0].embedding;
-  return normalize(rawEmbedding);
-}
+      const supabase = getSupabaseClient(req.headers.get("Authorization")!);
 
-Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
-  try {
-    const { pdfSource, query }: RequestBody = await req.json();
+      const queryEmbedding = await getEmbeddings(query);
 
-    if (!pdfSource || !query) {
-      return new Response(
-        JSON.stringify({
-          error: "Missing pdfSource or query in request body",
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
-    }
+      const { data, error } = await supabase.rpc("match_pdf_pages", {
+        query_embedding: queryEmbedding,
+        pdf_source: pdfSource,
+      });
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: { headers: { Authorization: req.headers.get("Authorization")! } },
-      },
-    );
+      if (error) {
+        throw new Error(error.message);
+      }
 
-    const queryEmbedding = await getEmbedding(query);
-
-    const { data, error } = await supabase.rpc("match_pdf_pages", {
-      query_embedding: queryEmbedding,
-      pdf_source: pdfSource,
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return new Response(
-      JSON.stringify({
+      return buildResponse({
         matching_pages: data,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-});
+      });
+    } catch (err: any) {
+      return buildResponse({ error: err.message }, 500);
+    }
+  }),
+);

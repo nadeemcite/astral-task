@@ -1,130 +1,85 @@
-import { corsHeaders } from '../_shared/cors.ts'
+import { buildResponse, withMethodCheck } from "../_shared/cors.ts";
 import pdfParse from "npm:pdf-parse";
-import fetch from "npm:node-fetch";
 import { PDFPageData, PDFParseOptions, RequestBody } from "./schemas.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
-import { OpenAI } from "npm:openai";
+import { getEmbeddings } from "../_shared/openaiClient.ts";
+import axiod from "https://deno.land/x/axiod@0.26.2/mod.ts";
+import { getSupabaseClient } from "../_shared/supabaseClient.ts";
 
-const openai = new OpenAI({
-  apiKey: Deno.env.get("OPENAI_API_KEY") ?? "",
-});
+Deno.serve(
+  withMethodCheck("POST", async (req: Request) => {
+    try {
+      const supabase = getSupabaseClient(req.headers.get("Authorization")!);
+      const { url }: RequestBody = await req.json();
+      let result = await getExistingPdfData(supabase, url);
+      if (!result) result = await createNewPdfData(supabase, url);
+      return buildResponse({
+        pdf_source_id: result.pdf_source_id,
+        pages: result.pagesData,
+      });
+    } catch (err: any) {
+      return buildResponse({ error: err.message }, 500);
+    }
+  }),
+);
 
-function normalize(vector: number[]): number[] {
-  const norm = Math.sqrt(vector.reduce((acc, v) => acc + v * v, 0));
-  return norm ? vector.map((v) => v / norm) : vector;
-}
-
-async function getEmbedding(text: string): Promise<number[]> {
-  const response = await openai.embeddings.create({
-    input: text,
-    model: "text-embedding-ada-002",
-  });
-  const rawEmbedding = response.data[0].embedding;
-  return normalize(rawEmbedding);
-}
-
-Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+const getExistingPdfData = async (supabase: any, url: string) => {
+  const { data: sourceData, error: sourceError } = await supabase
+    .from("pdf_source")
+    .select("id")
+    .eq("url", url)
+    .maybeSingle();
+  if (sourceError) throw new Error(sourceError.message);
+  if (sourceData && sourceData.id) {
+    const { data: pagesResponse, error: pagesError } = await supabase
+      .from("pdf_page")
+      .select("id, content, page_number")
+      .eq("pdf_source_id", sourceData.id);
+    if (pagesError) throw new Error(pagesError.message);
+    return { pdf_source_id: sourceData.id, pagesData: pagesResponse };
   }
-  try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: { headers: { Authorization: req.headers.get("Authorization")! } },
-      },
-    );
+  return null;
+};
 
-    const { url }: RequestBody = await req.json();
-
-    const { data: sourceData, error: sourceError } = await supabase
-      .from("pdf_source")
-      .select("id")
-      .eq("url", url)
-      .maybeSingle();
-
-    if (sourceError) {
-      throw new Error(sourceError.message);
-    }
-
-    let pdf_source_id = "";
-    let pagesData = [];
-
-    if (sourceData && sourceData.id) {
-      pdf_source_id = sourceData.id;
-      const { data: pagesResponse, error: pagesError } = await supabase
-        .from("pdf_page")
-        .select("id, content, page_number")
-        .eq("pdf_source_id", pdf_source_id);
-
-      if (pagesError) {
-        throw new Error(pagesError.message);
-      }
-      pagesData = pagesResponse;
-    } else {
-      const response = await fetch(url);
-      const buffer = new Uint8Array(await response.arrayBuffer());
-      const pages: PDFPageData[] = [];
-      const options: PDFParseOptions = {
-        pagerender: async (pageData) => {
-          const pageNumber = pageData.pageIndex + 1;
-          const textContent = await pageData.getTextContent();
-          const pageText = textContent.items.map((item) => item.str).join(" ");
-          const pageLabel = `Page ${pageNumber}`;
-          pages.push({ pageNumber, pageLabel, text: pageText });
-          return "";
-        },
-      };
-      await pdfParse(buffer, options);
-      const { data: insertSourceData, error: insertSourceError } =
-        await supabase
-          .from("pdf_source")
-          .insert([{ url }])
-          .select("id")
-          .maybeSingle();
-
-      if (insertSourceError) {
-        throw new Error(insertSourceError.message);
-      }
-      pdf_source_id = insertSourceData?.id;
-
-      const pagesWithEmbeddings = await Promise.all(
-        pages.map(async (page) => {
-          const embeddings = await getEmbedding(page.text);
-          return {
-            content: page.text,
-            page_number: page.pageNumber,
-            pdf_source_id,
-            embeddings,
-          };
-        }),
-      );
-
-      const { data: insertPagesData, error: insertPagesError } = await supabase
-        .from("pdf_page")
-        .insert(pagesWithEmbeddings)
-        .select("id, content, page_number");
-
-      if (insertPagesError) {
-        throw new Error(insertPagesError.message);
-      }
-      pagesData = insertPagesData;
-    }
-
-    return new Response(
-      JSON.stringify({
+const createNewPdfData = async (supabase: any, url: string) => {
+  const response = await axiod.get(url, { responseType: "arraybuffer" });
+  const buffer = new Uint8Array(response.data);
+  const pages: PDFPageData[] = [];
+  const options: PDFParseOptions = {
+    pagerender: async (pageData: any) => {
+      const pageNumber = pageData.pageIndex + 1;
+      const textContent = await pageData.getTextContent();
+      const pageText = textContent.items.map((item: any) => item.str).join(" ");
+      pages.push({
+        pageNumber,
+        pageLabel: `Page ${pageNumber}`,
+        text: pageText,
+      });
+      return "";
+    },
+  };
+  await pdfParse(buffer, options);
+  const { data: insertSourceData, error: insertSourceError } = await supabase
+    .from("pdf_source")
+    .insert([{ url }])
+    .select("id")
+    .maybeSingle();
+  if (insertSourceError) throw new Error(insertSourceError.message);
+  const pdf_source_id = insertSourceData?.id;
+  const pagesWithEmbeddings = await Promise.all(
+    pages.map(async (page) => {
+      const embeddings = await getEmbeddings(page.text);
+      return {
+        content: page.text,
+        page_number: page.pageNumber,
         pdf_source_id,
-        pages: pagesData,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-});
+        embeddings,
+      };
+    }),
+  );
+  const { data: insertPagesData, error: insertPagesError } = await supabase
+    .from("pdf_page")
+    .insert(pagesWithEmbeddings)
+    .select("id, content, page_number");
+  if (insertPagesError) throw new Error(insertPagesError.message);
+  return { pdf_source_id, pagesData: insertPagesData };
+};

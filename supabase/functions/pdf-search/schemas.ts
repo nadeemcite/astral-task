@@ -1,11 +1,11 @@
-interface RequestBody{
-    query: string
+interface RequestBody {
+  query: string;
 }
 
-interface SearchResponse{
-    url: string
-    content: string
-    title: string
+interface SearchResponse {
+  url: string;
+  content: string;
+  title: string;
 }
 
-export type {RequestBody, SearchResponse}
+export type { RequestBody, SearchResponse };

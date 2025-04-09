@@ -1,5 +1,5 @@
 export type SearchResultType = {
-  id: number|string;
+  id: number | string;
   url: string;
   title: string;
   description: string;
@@ -9,4 +9,4 @@ export type SearchResultType = {
     startPage: number;
     endPage: number;
   };
-}; 
+};
