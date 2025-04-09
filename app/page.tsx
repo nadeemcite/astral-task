@@ -32,7 +32,11 @@ export default function Home() {
   const searchPdf = async () => {
     setIsLoading(true);
     try {
-      const resp = await searchPDF(searchQuery);
+      const query =
+        selectedGrade == "all"
+          ? searchQuery
+          : `${searchQuery} Grade ${selectedGrade}`;
+      const resp = await searchPDF(query);
       const results = resp.results.map((row: any, i: number) => {
         scanPdf(row.url);
         return {
