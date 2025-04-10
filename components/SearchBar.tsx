@@ -1,9 +1,10 @@
+import { Grade, ISearchHistory } from "@/types";
 import { Search, History } from "lucide-react";
 import { useState } from "react";
 
 interface SearchHistoryProps {
-  history: string[];
-  onSelect: (query: string) => void;
+  history: ISearchHistory[];
+  onSelect: (query: ISearchHistory) => void;
 }
 
 function SearchHistory({ history, onSelect }: SearchHistoryProps) {
@@ -34,7 +35,7 @@ function SearchHistory({ history, onSelect }: SearchHistoryProps) {
           className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700"
         >
           <History className="w-4 h-4 text-gray-400" />
-          <span>{query}</span>
+          <span>{query.search_keyword}</span>
         </button>
       ))}
     </div>
@@ -44,10 +45,10 @@ function SearchHistory({ history, onSelect }: SearchHistoryProps) {
 interface SearchBarProps {
   value: string;
   onSearch: () => void;
-  onChange: (value: string) => void;
+  onChange: (value: ISearchHistory) => void;
   isLoading: boolean;
   placeholder?: string;
-  history?: string[];
+  history?: ISearchHistory[];
 }
 
 export function SearchBar({
@@ -67,7 +68,9 @@ export function SearchBar({
           type="text"
           placeholder={placeholder}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) =>
+            onChange({ search_keyword: e.target.value, grade: Grade.ALL })
+          }
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           className="flex-1 h-12 pl-4 bg-transparent text-base text-gray-900 placeholder:text-gray-400 focus:outline-none"

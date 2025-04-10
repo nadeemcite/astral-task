@@ -4,40 +4,54 @@ import { searchApi } from "./search-api.ts";
 import axiod from "https://deno.land/x/axiod@0.26.2/mod.ts";
 
 Deno.serve(
-  withMethodCheck("POST", async (req: Request) => {
-    const { query }: RequestBody = await req.json();
-    const results = await searchApi(`${query} filetype:pdf`);
-    const pdfResults = results.filter((result) => result.url.endsWith(".pdf"));
-
-    if (pdfResults.length === 0) {
-      return buildResponse(
-        {
-          error: "No results found, please adjust your query.",
-        },
-        404,
+  withMethodCheck(
+    "POST",
+    async (req: Request, supabase: any, userId: string) => {
+      const { query, grade }: RequestBody = await req.json();
+      const results = await searchApi(
+        `${query} ${grade === "all" ? "" : grade} filetype:pdf`,
       );
-    }
-
-    const workingResults = (
-      await Promise.all(
-        pdfResults.map(async (result) => {
-          const working = await isEndpointWorking(result.url);
-          return working ? result : null;
-        }),
-      )
-    ).filter((result) => result !== null);
-
-    if (workingResults.length === 0) {
-      return buildResponse(
+      await supabase.from("user_search_activity").insert([
         {
-          error: "All results are invalid.",
+          search_keyword: query,
+          grade,
+          user_id: userId,
         },
-        404,
+      ]);
+      const pdfResults = results.filter((result) =>
+        result.url.endsWith(".pdf"),
       );
-    }
 
-    return buildResponse({ results: workingResults });
-  }),
+      if (pdfResults.length === 0) {
+        return buildResponse(
+          {
+            error: "No results found, please adjust your query.",
+          },
+          404,
+        );
+      }
+
+      const workingResults = (
+        await Promise.all(
+          pdfResults.map(async (result) => {
+            const working = await isEndpointWorking(result.url);
+            return working ? result : null;
+          }),
+        )
+      ).filter((result) => result !== null);
+
+      if (workingResults.length === 0) {
+        return buildResponse(
+          {
+            error: "All results are invalid.",
+          },
+          404,
+        );
+      }
+
+      return buildResponse({ results: workingResults });
+    },
+  ),
 );
 
 const isEndpointWorking = async (url: string): Promise<boolean> => {

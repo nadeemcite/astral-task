@@ -1,4 +1,3 @@
-import { getSupabaseClient } from "../_shared/supabaseClient.ts";
 import { PDFDocument } from "https://esm.sh/pdf-lib";
 import { corsHeaders, withMethodCheck } from "../_shared/cors.ts";
 
@@ -25,23 +24,12 @@ const extractPdfPages = async (
   const copiedPages = await newDoc.copyPages(srcDoc, validPageIndices);
   copiedPages.forEach((page) => newDoc.addPage(page));
   const pdfBytes = await newDoc.save();
-  const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
-  const extractPath = `pdfs/extract-${Date.now()}.pdf`;
-  await supabase.storage
-    .from(Deno.env.get("BUCKET_NAME")!)
-    .upload(extractPath, pdfBlob);
-  await supabase
-    .from("pdf_source")
-    .update({ file_extract_path: extractPath })
-    .eq("id", pdfSourceId);
   return pdfBytes;
 };
 
 Deno.serve(
-  withMethodCheck("POST", async (req: Request) => {
+  withMethodCheck("POST", async (req: Request, supabase: any) => {
     const { pdfSourceId, pages } = await req.json();
-    const supabase = getSupabaseClient(req.headers.get("Authorization")!);
-
     return new Response(await extractPdfPages(supabase, pdfSourceId, pages), {
       headers: {
         ...corsHeaders,

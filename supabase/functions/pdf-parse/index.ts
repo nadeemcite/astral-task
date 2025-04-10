@@ -3,32 +3,33 @@ import pdfParse from "npm:pdf-parse";
 import { PDFPageData, PDFParseOptions, RequestBody } from "./schemas.ts";
 import { getEmbeddings } from "../_shared/openaiClient.ts";
 import axiod from "https://deno.land/x/axiod@0.26.2/mod.ts";
-import { getSupabaseClient } from "../_shared/supabaseClient.ts";
 
 Deno.serve(
-  withMethodCheck("POST", async (req: Request) => {
-    try {
-      const supabase = getSupabaseClient(req.headers.get("Authorization")!);
-      const { url }: RequestBody = await req.json();
-      let result = await getExistingPdfData(supabase, url);
-      if (!result) {
-        result = await createNewPdfData(supabase, url);
-        return buildResponse({
-          pdf_source_id: result.pdf_source_id,
-          pages: result.pagesData,
-          ready: false,
-        });
-      } else {
-        return buildResponse({
-          pdf_source_id: result.pdf_source_id,
-          pages: result.pagesData,
-          ready: result.pagesData.length != 0,
-        });
+  withMethodCheck(
+    "POST",
+    async (req: Request, supabase: any, userId: string) => {
+      try {
+        const { url }: RequestBody = await req.json();
+        let result = await getExistingPdfData(supabase, url);
+        if (!result) {
+          result = await createNewPdfData(supabase, url, userId);
+          return buildResponse({
+            pdf_source_id: result.pdf_source_id,
+            pages: result.pagesData,
+            ready: false,
+          });
+        } else {
+          return buildResponse({
+            pdf_source_id: result.pdf_source_id,
+            pages: result.pagesData,
+            ready: result.pagesData.length != 0,
+          });
+        }
+      } catch (err: any) {
+        return buildResponse({ error: err.message }, 500);
       }
-    } catch (err: any) {
-      return buildResponse({ error: err.message }, 500);
-    }
-  }),
+    },
+  ),
 );
 
 const getExistingPdfData = async (supabase: any, url: string) => {
@@ -122,13 +123,13 @@ const saveFileOnBucket = async (
   await batchInsertPages(pagesWithEmbeddings);
 };
 
-const createNewPdfData = async (supabase: any, url: string) => {
+const createNewPdfData = async (supabase: any, url: string, userId: string) => {
   const response = await axiod.get(url, { responseType: "arraybuffer" });
   const buffer = new Uint8Array(response.data);
 
   const { data: insertSourceData, error: insertSourceError } = await supabase
     .from("pdf_source")
-    .insert([{ url, file_path: null }])
+    .insert([{ url, file_path: null, created_by_user_id: userId }])
     .select("id")
     .maybeSingle();
   if (insertSourceError) throw new Error(insertSourceError.message);

@@ -7,7 +7,6 @@ create table if not exists pdf_source (
   id uuid primary key default gen_random_uuid(),
   url text not null unique,
   file_path text,
-  file_extract_path text,
   created_at timestamptz default now()
 );
 

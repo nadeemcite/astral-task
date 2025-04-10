@@ -3,11 +3,10 @@ import {
   corsHeaders,
   withMethodCheck,
 } from "../_shared/cors.ts";
-import { getSupabaseClient } from "../_shared/supabaseClient.ts";
 import { imageToPdf } from "./pdfToImage.ts";
 
 Deno.serve(
-  withMethodCheck("GET", async (req: Request) => {
+  withMethodCheck("GET", async (req: Request, supabase: any) => {
     try {
       const { searchParams } = new URL(req.url);
       const uuid = searchParams.get("id");
@@ -18,7 +17,6 @@ Deno.serve(
           400,
         );
       }
-      const supabase = getSupabaseClient(req.headers.get("Authorization")!);
 
       const { data: response, error: pagesError } = await supabase
         .from("pdf_source")

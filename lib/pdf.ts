@@ -2,8 +2,8 @@
 
 import supabaseClient from "@/lib/supabaseClient";
 
-export const searchPDF = async (query: string) => {
-  const { data } = await supabaseClient.post("/pdf-search", { query });
+export const searchPDF = async (query: string, grade: string) => {
+  const { data } = await supabaseClient.post("/pdf-search", { query, grade });
   return data;
 };
 

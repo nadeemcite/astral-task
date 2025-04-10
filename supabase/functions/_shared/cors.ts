@@ -1,4 +1,5 @@
 import process from "node:process";
+import { getSupabaseClient } from "../_shared/supabaseClient.ts";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": process.env.VERCEL_URL!,
@@ -24,14 +25,27 @@ const methodCheck = (req: Request, method: "GET" | "POST") => {
 
 export const withMethodCheck = (
   method: "GET" | "POST",
-  handler: (req: Request) => Promise<Response> | Response,
+  handler: (
+    req: Request,
+    supabase: any,
+    userId: string,
+  ) => Promise<Response> | Response,
 ) => {
   return async (req: Request): Promise<Response> => {
     const checkResponse = methodCheck(req, method);
     if (checkResponse) {
       return checkResponse;
     }
-    return await handler(req);
+    const supabase = getSupabaseClient(req.headers.get("Authorization")!);
+    const { data: response, error: pagesError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", "anon@anon.com")
+      .maybeSingle();
+    if (pagesError) {
+      throw new Error("anonymous user does not exist in db.");
+    }
+    return await handler(req, supabase, response?.id);
   };
 };
 

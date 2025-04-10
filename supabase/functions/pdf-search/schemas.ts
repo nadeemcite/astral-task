@@ -1,5 +1,6 @@
 interface RequestBody {
   query: string;
+  grade: string;
 }
 
 interface SearchResponse {

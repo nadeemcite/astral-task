@@ -1,10 +1,9 @@
 import { withMethodCheck, buildResponse } from "../_shared/cors.ts";
-import { getSupabaseClient } from "../_shared/supabaseClient.ts";
 import { RequestBody } from "./schemas.ts";
 import { getEmbeddings } from "../_shared/openaiClient.ts";
 
 Deno.serve(
-  withMethodCheck("POST", async (req: Request) => {
+  withMethodCheck("POST", async (req: Request, supabase: any) => {
     try {
       const { pdfSourceId, query }: RequestBody = await req.json();
 
@@ -16,8 +15,6 @@ Deno.serve(
           400,
         );
       }
-
-      const supabase = getSupabaseClient(req.headers.get("Authorization")!);
 
       const queryEmbedding = await getEmbeddings(query);
 
