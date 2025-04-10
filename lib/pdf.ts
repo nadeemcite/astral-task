@@ -8,8 +8,22 @@ export const searchPDF = async (query: string) => {
 };
 
 export const parsePdf = async (pdfUrl: string) => {
-  const { data } = await supabaseClient.post("/pdf-parse", { url: pdfUrl });
-  return data;
+  const maxRetries = 15;
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const { data } = await supabaseClient.post("/pdf-parse", { url: pdfUrl });
+
+    if (data.ready) {
+      return data;
+    }
+
+    if (attempt < maxRetries) {
+      await delay(2000); // wait for 2 seconds
+    } else {
+      throw new Error("Timeout: PDF parsing not ready after 20 seconds.");
+    }
+  }
 };
 
 export const processPdf = async (pdfSourceId: string, query: string) => {
