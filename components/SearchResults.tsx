@@ -1,3 +1,4 @@
+import { printExtractedPdf } from "@/lib/pdf";
 import { SearchResultType } from "@/types";
 import Image from "next/image";
 
@@ -9,7 +10,13 @@ const PagesPill = ({ totalPages }: { totalPages: number }) => {
   );
 };
 
-const RelevancyInfo = ({ relevantPages }: { relevantPages?: string }) => {
+const RelevancyInfo = ({
+  relevantPages,
+  handleCreateRelavantPDF,
+}: {
+  relevantPages?: { relavantStr: string; relavantPages: number[] };
+  handleCreateRelavantPDF: () => void;
+}) => {
   if (!relevantPages) {
     return (
       <div className="flex items-center gap-1 text-sm text-gray-500 mt-2">
@@ -26,16 +33,29 @@ const RelevancyInfo = ({ relevantPages }: { relevantPages?: string }) => {
   //   );
   // }
 
-  return <div className="text-sm text-gray-500 mt-2">{relevantPages}</div>;
+  return (
+    <div className="text-sm text-gray-500 mt-2">
+      {relevantPages.relavantStr}{" "}
+      <a href="#" onClick={handleCreateRelavantPDF}>
+        🖨️
+      </a>
+    </div>
+  );
 };
 
 const SearchResult = ({
+  id,
   title,
   description,
   image,
   totalPages,
   relevantPages,
 }: SearchResultType) => {
+  const handleCreateRelavantPDF = () => {
+    if (relevantPages)
+      printExtractedPdf(id.toString(), relevantPages?.relavantPages);
+  };
+
   return (
     <div className="flex flex-col sm:flex-row border rounded-lg overflow-hidden mb-4 bg-white">
       <div className="w-full sm:w-1/4 relative">
@@ -59,7 +79,10 @@ const SearchResult = ({
         <h3 className="font-medium text-base mb-2">{title}</h3>
         <p className="text-sm text-gray-600">{description.slice(0, 500)}</p>
 
-        <RelevancyInfo relevantPages={relevantPages} />
+        <RelevancyInfo
+          relevantPages={relevantPages}
+          handleCreateRelavantPDF={handleCreateRelavantPDF}
+        />
       </div>
     </div>
   );

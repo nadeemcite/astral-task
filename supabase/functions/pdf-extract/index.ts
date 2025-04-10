@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "../_shared/supabaseClient.ts";
 import { PDFDocument } from "https://esm.sh/pdf-lib";
+import { corsHeaders, withMethodCheck } from "../_shared/cors.ts";
 
 const extractPdfPages = async (
   supabase: any,
@@ -33,20 +34,19 @@ const extractPdfPages = async (
     .from("pdf_source")
     .update({ file_extract_path: extractPath })
     .eq("id", pdfSourceId);
+  return pdfBytes;
 };
 
-Deno.serve(async (req: Request) => {
-  const { pdfSourceId, pages } = await req.json();
-  const supabase = getSupabaseClient(req.headers.get("Authorization")!);
-  EdgeRuntime.waitUntil(extractPdfPages(supabase, pdfSourceId, pages));
-  return new Response(
-    JSON.stringify({
-      step: "success",
-    }),
-    {
+Deno.serve(
+  withMethodCheck("POST", async (req: Request) => {
+    const { pdfSourceId, pages } = await req.json();
+    const supabase = getSupabaseClient(req.headers.get("Authorization")!);
+
+    return new Response(await extractPdfPages(supabase, pdfSourceId, pages), {
       headers: {
-        "Content-Type": "application/json",
+        ...corsHeaders,
+        "Content-Type": "application/pdf",
       },
-    },
-  );
-});
+    });
+  }),
+);

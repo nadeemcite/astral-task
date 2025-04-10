@@ -8,22 +8,8 @@ export const searchPDF = async (query: string) => {
 };
 
 export const parsePdf = async (pdfUrl: string) => {
-  const maxRetries = 15;
-  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const { data } = await supabaseClient.post("/pdf-parse", { url: pdfUrl });
-
-    if (data.ready) {
-      return data;
-    }
-
-    if (attempt < maxRetries) {
-      await delay(2000); // wait for 2 seconds
-    } else {
-      throw new Error("Timeout: PDF parsing not ready after 20 seconds.");
-    }
-  }
+  const { data } = await supabaseClient.post("/pdf-parse", { url: pdfUrl });
+  return data;
 };
 
 export const processPdf = async (pdfSourceId: string, query: string) => {
@@ -42,16 +28,22 @@ interface MatchingPage {
 export const summarizeRelevantPages = (
   matchingPages: MatchingPage[],
   threshold: number = 0.75,
-): string => {
+): { relavantStr: string; relavantPages: number[] } => {
   const sortedRelevant: MatchingPage[] = matchingPages
     .filter((page) => page.similarity >= threshold)
     .sort((a, b) => a.page_number - b.page_number);
 
   if (sortedRelevant.length === 0) {
-    return "No pages are relevant";
+    return {
+      relavantStr: "No pages are relevant",
+      relavantPages: [],
+    };
   }
   if (sortedRelevant.length === matchingPages.length) {
-    return "All pages relevant";
+    return {
+      relavantStr: "All pages relevant",
+      relavantPages: sortedRelevant.map((r) => r.page_number),
+    };
   }
 
   const ranges: [number, number][] = [];
@@ -72,5 +64,41 @@ export const summarizeRelevantPages = (
     startNum === endNum ? `${startNum}` : `${startNum}-${endNum}`,
   );
   const numRelevant: number = sortedRelevant.length;
-  return `${numRelevant} pages relevant ${rangeStrs.join(", ")}`;
+  return {
+    relavantStr: `${numRelevant} pages relevant ${rangeStrs.join(", ")}`,
+    relavantPages: sortedRelevant.map((r) => r.page_number),
+  };
+};
+
+export const printExtractedPdf = async (
+  pdfSourceId: string,
+  pages: number[],
+) => {
+  try {
+    // Make the API call using axios (supabaseClient) with responseType 'arraybuffer'
+    const response = await supabaseClient.post(
+      "/pdf-extract",
+      { pdfSourceId, pages },
+      { responseType: "arraybuffer" },
+    );
+
+    // Create a Blob from the received ArrayBuffer, specifying a type for PDFs.
+    const blob = new Blob([response.data], { type: "application/pdf" });
+    // Create a URL for the Blob.
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Open a new window or tab with the generated Blob URL.
+    const newWindow = window.open(blobUrl, "_blank");
+
+    if (newWindow) {
+      // When the window has loaded the PDF, trigger the print dialog.
+      newWindow.addEventListener("load", () => {
+        newWindow.print();
+      });
+    } else {
+      console.error("Popup was blocked. Please allow popups for this site.");
+    }
+  } catch (error) {
+    console.error("Error fetching the extracted PDF:", error);
+  }
 };

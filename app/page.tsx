@@ -14,13 +14,33 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const scanPdf = async (pdfUrl: string) => {
-    setSearchResults([]);
-    const pdfParseResponse = await parsePdf(pdfUrl);
-    const relavanceResponse = await processPdf(
+    // Call parsePdf and poll until the response is ready.
+    let pdfParseResponse = await parsePdf(pdfUrl);
+    setSearchResults((prevResults) =>
+      prevResults.map((result) =>
+        result.url === pdfUrl
+          ? {
+              ...result,
+              id: pdfParseResponse.pdf_source_id,
+              image: `/api/pdf/image?id=${pdfParseResponse.pdf_source_id}`,
+            }
+          : result,
+      ),
+    );
+    // Poll every 2 seconds until ready becomes true
+    while (!pdfParseResponse.ready) {
+      console.log("PDF is not ready yet. Polling again in 2 seconds...");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      pdfParseResponse = await parsePdf(pdfUrl);
+    }
+
+    // Only when ready, call processPdf to get the relevance response.
+    const relevanceResponse = await processPdf(
       pdfParseResponse.pdf_source_id,
       searchQuery,
     );
 
+    // Update the search results: assign pdf_source_id, image URL, and other relevant information.
     setSearchResults((prevResults) =>
       prevResults.map((result) =>
         result.url === pdfUrl
@@ -29,7 +49,7 @@ export default function Home() {
               totalPages: pdfParseResponse.pages.length,
               id: pdfParseResponse.pdf_source_id,
               image: `/api/pdf/image?id=${pdfParseResponse.pdf_source_id}`,
-              relevantPages: relavanceResponse,
+              relevantPages: relevanceResponse,
             }
           : result,
       ),
@@ -37,6 +57,7 @@ export default function Home() {
   };
 
   const searchPdf = async () => {
+    setSearchResults(() => []);
     setIsLoading(true);
     try {
       const query =
