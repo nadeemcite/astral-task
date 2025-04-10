@@ -57,13 +57,18 @@ const saveFileOnBucket = async (
   const pdfBlob = new Blob([buffer], { type: "application/pdf" });
   const filePath = `pdfs/${Date.now()}.pdf`;
   const { error: storageError } = await supabase.storage
-    .from("pdffiles")
+    .from(Deno.env.get("BUCKET_NAME")!)
     .upload(filePath, pdfBlob, {
       contentType: "application/pdf",
       upsert: false,
     });
   if (storageError) {
     throw new Error(`Storage upload error: ${storageError.message}`);
+  } else {
+    await supabase
+      .from("pdf_source")
+      .update({ file_path: filePath })
+      .eq("id", pdf_source_id);
   }
   const pages: PDFPageData[] = [];
   const options: PDFParseOptions = {
