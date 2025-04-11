@@ -22,3 +22,10 @@ alter table pdf_source
 insert into users (email)
 values ('anon@anon.com')
 on conflict (email) do nothing;
+
+-- User history view, unique search results
+CREATE OR REPLACE VIEW distinct_user_search_activity AS
+SELECT DISTINCT ON (search_keyword, grade)
+       *
+FROM user_search_activity
+ORDER BY search_keyword, grade, created_at DESC;

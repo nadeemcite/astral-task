@@ -35,7 +35,10 @@ function SearchHistory({ history, onSelect }: SearchHistoryProps) {
           className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700"
         >
           <History className="w-4 h-4 text-gray-400" />
-          <span>{query.search_keyword}</span>
+          <span>
+            {query.search_keyword}{" "}
+            {query.grade !== "all" && `Grade ${query.grade}`}
+          </span>
         </button>
       ))}
     </div>
