@@ -6,6 +6,7 @@ Deno.serve(
     const { data: resp, error } = await supabase
       .from("distinct_user_search_activity")
       .select("search_keyword, grade")
+      .order("created_at", { ascending: false })
       .limit(5);
 
     if (error) {

@@ -8,6 +8,19 @@ import { ISearchHistory, SearchResultType, Grade } from "@/types";
 import { parsePdf, processPdf, searchPDF } from "@/lib/pdf";
 import { getUserActivities } from "@/lib/user";
 
+const resizeResults = (searchHistory: ISearchHistory[]): ISearchHistory[] => {
+  const seen = new Set<string>();
+
+  const uniqueResults = searchHistory.filter((item) => {
+    const key = `${item.search_keyword}-${item.grade}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+  return uniqueResults.slice(0, 5);
+};
 export default function Home() {
   const [selectedGrade, setSelectedGrade] = useState<Grade>(Grade.ALL);
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,6 +80,12 @@ export default function Home() {
   };
 
   const searchPdf = async () => {
+    setSearchHistory((prev) =>
+      resizeResults([
+        { search_keyword: searchQuery, grade: selectedGrade },
+        ...prev,
+      ]),
+    );
     setSearchResults(() => []);
     setIsLoading(true);
     try {
