@@ -7,6 +7,7 @@ import { SearchResults } from "@/components/SearchResults";
 import { ISearchHistory, SearchResultType, Grade } from "@/types";
 import { parsePdf, processPdf, searchPDF } from "@/lib/pdf";
 import { getUserActivities } from "@/lib/user";
+import Spinner from "@/components/Spinner";
 
 const resizeResults = (searchHistory: ISearchHistory[]): ISearchHistory[] => {
   const seen = new Set<string>();
@@ -145,29 +146,7 @@ export default function Home() {
       <div className="w-full px-4 mt-6">
         {isLoading ? (
           <div className="flex flex-col justify-center items-center h-64">
-            <svg
-              className="animate-spin h-8 w-8 text-gray-500"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v8H4z"
-              ></path>
-            </svg>
-            <span className="mt-2 text-lg font-semibold text-gray-600">
-              Loading...
-            </span>
+            <Spinner />
           </div>
         ) : (
           <SearchResults results={searchResults} />

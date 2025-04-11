@@ -1,6 +1,9 @@
 import { printExtractedPdf } from "@/lib/pdf";
 import { SearchResultType } from "@/types";
 import Image from "next/image";
+import Modal from "./Modal";
+import { useState } from "react";
+import Spinner from "./Spinner";
 
 const PagesPill = ({ totalPages }: { totalPages: number }) => {
   return (
@@ -51,9 +54,12 @@ const SearchResult = ({
   totalPages,
   relevantPages,
 }: SearchResultType) => {
-  const handleCreateRelavantPDF = () => {
+  const [isLoadingModalOpen, setIsLoadingModalOpen] = useState<boolean>(false);
+  const handleCreateRelavantPDF = async () => {
+    setIsLoadingModalOpen(true);
     if (relevantPages)
-      printExtractedPdf(id.toString(), relevantPages?.relavantPages);
+      await printExtractedPdf(id.toString(), relevantPages?.relavantPages);
+    setIsLoadingModalOpen(false);
   };
 
   return (
@@ -64,8 +70,9 @@ const SearchResult = ({
             <Image
               src={image}
               alt={title}
-              className="w-full h-full object-cover object-[top_left]"
+              className="w-full h-full object-cover object-[top_left] cursor-pointer"
               fill
+              onClick={handleCreateRelavantPDF}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -83,6 +90,17 @@ const SearchResult = ({
           relevantPages={relevantPages}
           handleCreateRelavantPDF={handleCreateRelavantPDF}
         />
+        <Modal
+          isOpen={isLoadingModalOpen}
+          onClose={() => {
+            setIsLoadingModalOpen(false);
+          }}
+          title="Downloading PDF"
+        >
+          <p>
+            <Spinner />
+          </p>
+        </Modal>
       </div>
     </div>
   );
