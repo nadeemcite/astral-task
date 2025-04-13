@@ -75,23 +75,19 @@ export const printExtractedPdf = async (
   pages: number[],
 ) => {
   try {
-    // Make the API call using axios (supabaseClient) with responseType 'arraybuffer'
     const response = await supabaseClient.post(
       "/pdf-extract",
       { pdfSourceId, pages },
       { responseType: "arraybuffer" },
     );
 
-    // Create a Blob from the received ArrayBuffer, specifying a type for PDFs.
     const blob = new Blob([response.data], { type: "application/pdf" });
-    // Create a URL for the Blob.
+
     const blobUrl = URL.createObjectURL(blob);
 
-    // Open a new window or tab with the generated Blob URL.
     const newWindow = window.open(blobUrl, "_blank");
 
     if (newWindow) {
-      // When the window has loaded the PDF, trigger the print dialog.
       newWindow.addEventListener("load", () => {
         newWindow.print();
       });

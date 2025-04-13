@@ -5,41 +5,46 @@ import Modal from "./Modal";
 import { useState } from "react";
 import Spinner from "./Spinner";
 
-const PagesPill = ({ totalPages }: { totalPages: number }) => {
-  return (
-    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-      {totalPages} pages
-    </div>
-  );
-};
+const PagesPill = ({ totalPages }: { totalPages: number }) => (
+  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+    {totalPages} pages
+  </div>
+);
 
-const RelevancyInfo = ({
-  relevantPages,
-  handleCreateRelavantPDF,
+interface RelevanceData {
+  relevantStr: string;
+  relevantPages: number[];
+}
+
+const RelevanceInfo = ({
+  relevantData,
+  handleCreateRelevantPDF,
 }: {
-  relevantPages?: { relavantStr: string; relavantPages: number[] };
-  handleCreateRelavantPDF: () => void;
+  relevantData?: RelevanceData;
+  handleCreateRelevantPDF: () => void;
 }) => {
-  if (!relevantPages) {
+  if (!relevantData) {
     return (
       <div className="flex items-center gap-1 text-sm text-gray-500 mt-2">
         <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-        <span>Checking relevancy</span>
+        <span>Checking relevance</span>
       </div>
     );
   }
-
   // const range = relevantPages.endPage - relevantPages.startPage + 1;
   // if (range === totalPages) {
   //   return (
   //     <div className="text-sm text-gray-500 mt-2">All pages are relevant</div>
   //   );
   // }
-
   return (
     <div className="text-sm text-gray-500 mt-2">
-      {relevantPages.relavantStr}{" "}
-      <a href="#" onClick={handleCreateRelavantPDF}>
+      {relevantData.relevantStr}{" "}
+      <a
+        href="#"
+        onClick={handleCreateRelevantPDF}
+        className="text-blue-600 hover:text-blue-800 font-bold ml-2"
+      >
         🖨️
       </a>
     </div>
@@ -54,12 +59,23 @@ const SearchResult = ({
   totalPages,
   relevantPages,
 }: SearchResultType) => {
-  const [isLoadingModalOpen, setIsLoadingModalOpen] = useState<boolean>(false);
-  const handleCreateRelavantPDF = async () => {
-    setIsLoadingModalOpen(true);
-    if (relevantPages)
-      await printExtractedPdf(id.toString(), relevantPages?.relavantPages);
-    setIsLoadingModalOpen(false);
+  const [isModalLoading, setIsModalLoading] = useState<boolean>(false);
+
+  // Transform the incoming "relevantPages" property if present
+  // from { relavantStr, relavantPages } to the expected { relevantStr, relevantPages } format.
+  const relevanceData: RelevanceData | undefined = relevantPages
+    ? {
+        relevantStr: (relevantPages as any).relavantStr,
+        relevantPages: (relevantPages as any).relavantPages,
+      }
+    : undefined;
+
+  const handleCreateRelevantPDF = async () => {
+    setIsModalLoading(true);
+    if (relevanceData) {
+      await printExtractedPdf(id.toString(), relevanceData.relevantPages);
+    }
+    setIsModalLoading(false);
   };
 
   return (
@@ -72,11 +88,11 @@ const SearchResult = ({
               alt={title}
               className="w-full h-full object-cover object-[top_left] cursor-pointer"
               fill
-              onClick={handleCreateRelavantPDF}
+              onClick={handleCreateRelevantPDF}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-500"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-500" />
             </div>
           )}
         </div>
@@ -85,16 +101,13 @@ const SearchResult = ({
       <div className="p-4 flex-1">
         <h3 className="font-medium text-base mb-2">{title}</h3>
         <p className="text-sm text-gray-600">{description.slice(0, 500)}</p>
-
-        <RelevancyInfo
-          relevantPages={relevantPages}
-          handleCreateRelavantPDF={handleCreateRelavantPDF}
+        <RelevanceInfo
+          relevantData={relevanceData}
+          handleCreateRelevantPDF={handleCreateRelevantPDF}
         />
         <Modal
-          isOpen={isLoadingModalOpen}
-          onClose={() => {
-            setIsLoadingModalOpen(false);
-          }}
+          isOpen={isModalLoading}
+          onClose={() => setIsModalLoading(false)}
           title="Downloading PDF"
         >
           <p>
@@ -106,15 +119,13 @@ const SearchResult = ({
   );
 };
 
-export const SearchResults = ({ results }: { results: SearchResultType[] }) => {
-  return (
+export const SearchResults = ({ results }: { results: SearchResultType[] }) => (
+  <div>
+    <h2 className="text-xl font-medium mb-4">Results</h2>
     <div>
-      <h2 className="text-xl font-medium mb-4">Results</h2>
-      <div>
-        {results.map((result) => (
-          <SearchResult key={result.id} {...result} />
-        ))}
-      </div>
+      {results.map((result) => (
+        <SearchResult key={result.id} {...result} />
+      ))}
     </div>
-  );
-};
+  </div>
+);
