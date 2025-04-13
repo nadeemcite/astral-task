@@ -1,9 +1,9 @@
-import { printExtractedPdf } from "@/lib/pdf";
 import { SearchResultType } from "@/types";
 import Image from "next/image";
 import Modal from "./Modal";
 import { useState } from "react";
 import Spinner from "./Spinner";
+import PrintPdfModal from "./PrintPdfModal";
 
 const PagesPill = ({ totalPages }: { totalPages: number }) => (
   <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
@@ -72,10 +72,6 @@ const SearchResult = ({
 
   const handleCreateRelevantPDF = async () => {
     setIsModalLoading(true);
-    if (relevanceData) {
-      await printExtractedPdf(id.toString(), relevanceData.relevantPages);
-    }
-    setIsModalLoading(false);
   };
 
   return (
@@ -114,6 +110,16 @@ const SearchResult = ({
             <Spinner />
           </p>
         </Modal>
+        {isModalLoading && (
+          <PrintPdfModal
+            pdfSourceId={id.toString()}
+            defaultRelevantPages={relevanceData?.relevantPages || []}
+            totalPages={totalPages || 0}
+            onClose={() => {
+              setIsModalLoading(false);
+            }}
+          />
+        )}
       </div>
     </div>
   );

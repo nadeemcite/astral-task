@@ -35,13 +35,15 @@ Before getting started, ensure you have the following prerequisites installed on
 - [Bun](https://bun.sh/) – For managing and running frontend dependencies.
 - [Docker](https://www.docker.com/) – For containerizing and running your backend services.
 
-### Step 1: Install Dependencies 
+### Step 1: Install Dependencies
+
 1. Open your terminal and navigate to the project root.
 2. Run the following command to install the frontend dependencies using Bun:
 
    bun install
 
 ### Step 2: Setup Environment Variables
+
 1. Copy `.env.example` to create a `.env.local` file in the root directory.
 2. Update `.env.local` with your Supabase credentials:
    ```
@@ -49,27 +51,29 @@ Before getting started, ensure you have the following prerequisites installed on
    NEXT_PUBLIC_SUPABASE_ANON_KEY=[YOUR_SUPABASE_API_ANON_KEY]
    ```
 3. We also need to setup `supabase/functions/.env` file for supabase:
-    ```
-    OPENAI_API_KEY=openai-key
-    PDFCO_API_KEY=pdfco-api-key
-    TAVILY_API_KEY=tavily-api-key
-    VERCEL_URL=http://localhost:3000
-    BUCKET_NAME=pdffiles
-    ```
+   ```
+   OPENAI_API_KEY=openai-key
+   PDFCO_API_KEY=pdfco-api-key
+   TAVILY_API_KEY=tavily-api-key
+   VERCEL_URL=http://localhost:3000
+   BUCKET_NAME=pdffiles
+   ```
 
 ### Step 3: Starting the Backend
+
 To start the Supabase backend locally via Docker, use:
 
-   npm run supabase-start
+npm run supabase-start
 
 This command sets up the Supabase environment locally. Make sure Docker is running on your system.
 
 Make sure to run migrations and add bucket w.r.t. env variables setup in step 2.3
 
 ### Step 4: Running the Development Server
+
 Finally, start the Next.js development server with Bun:
 
-   bun dev
+bun dev
 
 Once running, navigate to http://localhost:3000 in your browser to see the application UI.
 
