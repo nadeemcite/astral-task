@@ -8,6 +8,7 @@ import { ISearchHistory, SearchResultType, Grade } from "@/types";
 import { parsePdf, processPdf, searchPDF } from "@/lib/pdf";
 import { getUserActivities } from "@/lib/user";
 import Spinner from "@/components/Spinner";
+import Modal from "@/components/Modal";
 
 const resizeResults = (searchHistory: ISearchHistory[]): ISearchHistory[] => {
   const seen = new Set<string>();
@@ -28,11 +29,14 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<SearchResultType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchHistory, setSearchHistory] = useState<ISearchHistory[]>([]);
+  const [isLoadingModalOpen, setIsLoadingModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const loadUserActivities = async () => {
+      setIsLoadingModalOpen(true);
       const resp = await getUserActivities();
       setSearchHistory((prev) => [...resp]);
+      setIsLoadingModalOpen(false);
     };
     loadUserActivities();
   }, []);
@@ -152,6 +156,17 @@ export default function Home() {
           <SearchResults results={searchResults} />
         )}
       </div>
+      <Modal
+        isOpen={isLoadingModalOpen}
+        onClose={() => {
+          setIsLoadingModalOpen(false);
+        }}
+        title="Setting up application"
+      >
+        <p>
+          <Spinner />
+        </p>
+      </Modal>
     </div>
   );
 }
