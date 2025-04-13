@@ -3,6 +3,16 @@ import pdfParse from "npm:pdf-parse";
 import { PDFPageData, PDFParseOptions, RequestBody } from "./schemas.ts";
 import { getEmbeddings } from "../_shared/openaiClient.ts";
 import axiod from "https://deno.land/x/axiod@0.26.2/mod.ts";
+import {
+  CustomError,
+  EnvNotDefined,
+  StorageUploadError,
+  PDFSourceQueryError,
+  PDFPageQueryError,
+  BatchInsertError,
+  DownloadFailedError,
+  PDFCreationError,
+} from "../_shared/errors.ts";
 
 Deno.serve(
   withMethodCheck(
@@ -10,6 +20,7 @@ Deno.serve(
     async (req: Request, supabase: any, userId: string) => {
       try {
         const { url }: RequestBody = await req.json();
+
         let result = await getExistingPdfData(supabase, url);
         if (!result) {
           result = await createNewPdfData(supabase, url, userId);
@@ -22,11 +33,16 @@ Deno.serve(
           return buildResponse({
             pdf_source_id: result.pdf_source_id,
             pages: result.pagesData,
-            ready: result.pagesData.length != 0,
+            ready: result.pagesData.length !== 0,
           });
         }
       } catch (err: any) {
-        return buildResponse({ error: err.message }, 500);
+        if (err instanceof CustomError) {
+          console.error("Custom error in POST pdf parse:", err);
+          return err.getErrorResponse();
+        }
+        console.error("Unknown error in POST pdf parse:", err);
+        return buildResponse({ error: "An unexpected error occurred." }, 500);
       }
     },
   ),
@@ -38,13 +54,13 @@ const getExistingPdfData = async (supabase: any, url: string) => {
     .select("id")
     .eq("url", url)
     .maybeSingle();
-  if (sourceError) throw new Error(sourceError.message);
+  if (sourceError) throw new PDFSourceQueryError(sourceError.message);
   if (sourceData && sourceData.id) {
     const { data: pagesResponse, error: pagesError } = await supabase
       .from("pdf_page")
       .select("id, content, page_number")
       .eq("pdf_source_id", sourceData.id);
-    if (pagesError) throw new Error(pagesError.message);
+    if (pagesError) throw new PDFPageQueryError(pagesError.message);
     return { pdf_source_id: sourceData.id, pagesData: pagesResponse };
   }
   return null;
@@ -52,19 +68,23 @@ const getExistingPdfData = async (supabase: any, url: string) => {
 
 const saveFileOnBucket = async (
   supabase: any,
-  buffer: Uint8Array<any>,
+  buffer: Uint8Array,
   pdf_source_id: string,
 ) => {
+  const bucketName = Deno.env.get("BUCKET_NAME");
+  if (!bucketName) {
+    throw new EnvNotDefined("BUCKET_NAME");
+  }
   const pdfBlob = new Blob([buffer], { type: "application/pdf" });
   const filePath = `pdfs/${Date.now()}.pdf`;
   const { error: storageError } = await supabase.storage
-    .from(Deno.env.get("BUCKET_NAME")!)
+    .from(bucketName)
     .upload(filePath, pdfBlob, {
       contentType: "application/pdf",
       upsert: false,
     });
   if (storageError) {
-    throw new Error(`Storage upload error: ${storageError.message}`);
+    throw new StorageUploadError(storageError.message);
   } else {
     await supabase
       .from("pdf_source")
@@ -97,7 +117,7 @@ const saveFileOnBucket = async (
       };
     }),
   );
-  const batchSize = 10;
+  const batchSize = 20;
   const batchInsertPages = async (
     pagesData: {
       content: string;
@@ -114,7 +134,7 @@ const saveFileOnBucket = async (
         .insert(batch)
         .select("id, content, page_number");
       if (batchError) {
-        throw new Error(batchError.message);
+        throw new BatchInsertError(batchError.message);
       }
       insertedPages = insertedPages.concat(batchData);
     }
@@ -124,15 +144,19 @@ const saveFileOnBucket = async (
 };
 
 const createNewPdfData = async (supabase: any, url: string, userId: string) => {
-  const response = await axiod.get(url, { responseType: "arraybuffer" });
+  let response;
+  try {
+    response = await axiod.get(url, { responseType: "arraybuffer" });
+  } catch (err: any) {
+    throw new DownloadFailedError(err.message);
+  }
   const buffer = new Uint8Array(response.data);
-
   const { data: insertSourceData, error: insertSourceError } = await supabase
     .from("pdf_source")
     .insert([{ url, file_path: null, created_by_user_id: userId }])
     .select("id")
     .maybeSingle();
-  if (insertSourceError) throw new Error(insertSourceError.message);
+  if (insertSourceError) throw new PDFCreationError(insertSourceError.message);
   const pdf_source_id = insertSourceData?.id;
   EdgeRuntime.waitUntil(saveFileOnBucket(supabase, buffer, pdf_source_id));
   return { pdf_source_id, pagesData: [] };

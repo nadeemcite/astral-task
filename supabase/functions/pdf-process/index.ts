@@ -1,6 +1,7 @@
 import { withMethodCheck, buildResponse } from "../_shared/cors.ts";
 import { RequestBody } from "./schemas.ts";
 import { getEmbeddings } from "../_shared/openaiClient.ts";
+import { CustomError, PDFMatchQueryError } from "../_shared/errors.ts";
 
 Deno.serve(
   withMethodCheck("POST", async (req: Request, supabase: any) => {
@@ -9,9 +10,7 @@ Deno.serve(
 
       if (!pdfSourceId || !query) {
         return buildResponse(
-          {
-            error: "Missing pdfSource or query in request body",
-          },
+          { error: "Missing pdfSource or query in request body" },
           400,
         );
       }
@@ -24,14 +23,19 @@ Deno.serve(
       });
 
       if (error) {
-        throw new Error(error.message);
+        throw new PDFMatchQueryError(error.message);
       }
 
       return buildResponse({
         pages: data,
       });
     } catch (err: any) {
-      return buildResponse({ error: err.message }, 500);
+      if (err instanceof CustomError) {
+        console.error("Custom error in POST pdf process:", err);
+        return err.getErrorResponse();
+      }
+      console.error("Unknown error in POST pdf process:", err);
+      return buildResponse({ error: "An unexpected error occurred." }, 500);
     }
   }),
 );

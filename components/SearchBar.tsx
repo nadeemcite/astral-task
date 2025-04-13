@@ -1,3 +1,5 @@
+"use client";
+
 import { Grade, ISearchHistory } from "@/types";
 import { Search, History } from "lucide-react";
 import { useState } from "react";
