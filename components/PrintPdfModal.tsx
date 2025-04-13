@@ -74,7 +74,7 @@ const PrintPdfModal: React.FC<PrintPdfModalProps> = ({
               onChange={() => setPrintOption("relevant")}
               className="mr-2 bg-transparent text-base text-gray-900 placeholder:text-gray-400"
             />
-            Print Relevant Pages (Default)
+            Print Relevant Pages
           </label>
           <label className="block mb-2">
             <input
@@ -144,16 +144,22 @@ const PrintPdfModal: React.FC<PrintPdfModalProps> = ({
           )}
         </div>
         <div className="flex justify-end items-center gap-4">
-          <button onClick={onClose} className="px-4 py-2 border rounded">
-            Cancel
-          </button>
-          <button
-            onClick={handlePrint}
-            disabled={isPrinting}
-            className="px-4 py-2 bg-blue-600 text-white rounded"
-          >
-            {isPrinting ? <Spinner /> : "Print PDF"}
-          </button>
+          {isPrinting ? (
+            <Spinner />
+          ) : (
+            <>
+              <button onClick={onClose} className="px-4 py-2 border rounded">
+                Cancel
+              </button>
+              <button
+                onClick={handlePrint}
+                disabled={isPrinting}
+                className={`px-4 py-2 rounded bg-blue-600 text-white`}
+              >
+                Print PDF
+              </button>
+            </>
+          )}
         </div>
       </div>
     </Modal>
