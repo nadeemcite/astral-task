@@ -1,4 +1,4 @@
-# PDF Search and Extraction Application
+# PDF Search! An AI Solution to find relavat docs
 
 This project is a full-stack PDF search and extraction application built using Next.js for the frontend and Supabase as the backend. It allows users to:
 
@@ -83,14 +83,15 @@ Below is a diagram that outlines how data flows through the system:
 
 ```mermaid
 flowchart TD
-    A[User Interface (Next.js)]
+    A["User Interface (Next.js)"]
     B[SearchBar & GradeDropdown Components]
     C[API Endpoint for PDF Search]
-    D[SearchPDF Function (Backend)]
+    D["SearchPDF Function (Backend)"]
     E[Supabase Database]
-    F[PDF Parsing & Processing (pdf-parse)]
+    F["PDF Parsing & Processing (pdf-parse)"]
     G[Image Generation API Endpoint]
     H[User Search Activity Logging]
+    I[Final Result with relavance]
 
     A --> B
     B --> C
@@ -100,6 +101,7 @@ flowchart TD
     F --> G
     D --> H
     E --> H
+    H --> I
 ```
 
 ## Running the Project
