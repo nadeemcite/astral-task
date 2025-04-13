@@ -1,6 +1,12 @@
-# Next.js & Supabase Project Starter
+# PDF Search and Extraction Application
 
-Welcome to the Next.js & Supabase Project Starter! This project is built with **Next.js** for the frontend and **Supabase** for the backend, and it leverages **Bun** as an ultra-fast JavaScript runtime along with **Docker** for container management. The project showcases a dynamic user interface with drag-and-drop features (using dnd-kit), interactive components (using Radix UI), and responsive design powered by Tailwind CSS.
+This project is a full-stack PDF search and extraction application built using Next.js for the frontend and Supabase as the backend. It allows users to:
+
+- Search for PDFs using query parameters and filtering (such as grade).
+- Display search results with a preview image generated via a backend API.
+- Process PDFs to extract pages and evaluate the relevance of individual pages.
+- Track user search activity.
+- Print extracted PDF data.
 
 ## Table of Contents
 
@@ -8,11 +14,8 @@ Welcome to the Next.js & Supabase Project Starter! This project is built with **
 - [Setup and Installation](#setup-and-installation)
 - [How It Works](#how-it-works)
   - [Data Flow](#data-flow)
-  - [User Journey](#user-journey)
 - [Running the Project](#running-the-project)
 - [Project Structure](#project-structure)
-- [Feedback and Issues](#feedback-and-issues)
-- [License](#license)
 
 ## Features
 
@@ -45,6 +48,14 @@ Before getting started, ensure you have the following prerequisites installed on
    NEXT_PUBLIC_SUPABASE_URL=[YOUR_SUPABASE_PROJECT_URL]
    NEXT_PUBLIC_SUPABASE_ANON_KEY=[YOUR_SUPABASE_API_ANON_KEY]
    ```
+3. We also need to setup `supabase/functions/.env` file for supabase:
+    ```
+    OPENAI_API_KEY=openai-key
+    PDFCO_API_KEY=pdfco-api-key
+    TAVILY_API_KEY=tavily-api-key
+    VERCEL_URL=http://localhost:3000
+    BUCKET_NAME=pdffiles
+    ```
 
 ### Step 3: Starting the Backend
 To start the Supabase backend locally via Docker, use:
@@ -52,6 +63,8 @@ To start the Supabase backend locally via Docker, use:
    npm run supabase-start
 
 This command sets up the Supabase environment locally. Make sure Docker is running on your system.
+
+Make sure to run migrations and add bucket w.r.t. env variables setup in step 2.3
 
 ### Step 4: Running the Development Server
 Finally, start the Next.js development server with Bun:
@@ -66,30 +79,27 @@ The project integrates a modern frontend built with Next.js that communicates wi
 
 ### Data Flow
 
-Below is a Mermaid diagram that outlines how data flows through the system:
+Below is a diagram that outlines how data flows through the system:
 
 ```mermaid
 flowchart TD
-  A[User Interaction] -->|HTTP Requests| B(Next.js Frontend)
-  B -->|API Calls| C[Supabase Client Library]
-  C -->|Query/Mutation| D[Supabase Backend]
-  D -->|Data Responses| C
-  C -->|Return Data| B
-  B -->|Render UI| A
-```
+    A[User Interface (Next.js)]
+    B[SearchBar & GradeDropdown Components]
+    C[API Endpoint for PDF Search]
+    D[SearchPDF Function (Backend)]
+    E[Supabase Database]
+    F[PDF Parsing & Processing (pdf-parse)]
+    G[Image Generation API Endpoint]
+    H[User Search Activity Logging]
 
-### User Journey
-
-Below is a Mermaid diagram that demonstrates the typical user journey:
-
-```mermaid
-flowchart LR
-  U[User Visits Homepage] --> V[Sees Mock UI]
-  V --> W[Interacts with Components]
-  W --> X[Triggers API Calls to Supabase]
-  X --> Y[Receives Data & Auth Details]
-  Y --> Z[UI Updates with New Content]
-  Z --> U
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    D --> F
+    F --> G
+    D --> H
+    E --> H
 ```
 
 ## Running the Project
@@ -113,6 +123,6 @@ A quick glance at the core files and their purposes:
 
 - package.json: Contains all project dependencies and scripts.
 - .env.local: Local environment configuration (copy from .env.example).
-- pages/ or app/: Next.js pages or application directories.
+- app/: Next.js pages or application directories.
 - components/: Reusable UI components using dnd-kit and Radix UI.
 - styles/: Tailwind CSS configuration and global styles.
